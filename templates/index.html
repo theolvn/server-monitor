@@ -3,19 +3,88 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CPU Performance</title>
+    <title>System Performance Monitor</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.7.0/chart.min.js"></script>
 </head>
 <body>
-    <h1>CPU</h1>
-    <p>Utilisation totale du CPU : {{ cpu_usage }}%</p>
-    <h1>RAM</h1>
-    <p>Utilisation totale de la RAM : {{ memory }}%</p>
-    <h1>SERVER STATUS</h1>
-    <p>Etat du serveur minecraft : {{ server_status }}</p>
+    <h1>System Performance Monitor</h1>
+    <canvas id="systemChart" width="800" height="400"></canvas>
 
     <script>
-        var loadTime = window.performance.timing.domContentLoadedEventEnd - window.performance.timing.navigationStart;
-        console.log("Temps de chargement de la page (en millisecondes) :", loadTime);
+        var ctx = document.getElementById('systemChart').getContext('2d');
+        var systemChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array.from({ length: 360 }, (_, i) => (-i).toString()), // Inverser l'ordre des labels
+                datasets: [{
+                    label: 'CPU Usage (%)',
+                    data: [],
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }, {
+                    label: 'RAM Usage (%)',
+                    data: [],
+                    borderColor: 'rgb(255, 99, 132)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: false,
+                scales: {
+                    x: {
+                        type: 'linear',
+                        position: 'bottom',
+                        min: -360,
+                        max: 0,
+                        ticks: {
+                            stepSize: 6,
+                            callback: function(value, index, values) {
+                                if (value === 0) return 'now';
+                                if (value % 60 === 0) return Math.abs(value) / 6 + 'm ago';
+                                else return '';
+                            }
+                        }
+                    },
+                    y: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    annotation: {
+                        drawTime: 'afterDatasetsDraw',
+                        annotations: [{
+                            type: 'line',
+                            mode: 'vertical',
+                            scaleID: 'x',
+                            value: 0,
+                            borderColor: 'rgba(255, 99, 132, 0.5)',
+                            borderWidth: 2
+                        }]
+                    }
+                }
+            }
+        });
+
+        function fetchSystemData() {
+            fetch('/cpu_data')
+                .then(response => response.json())
+                .then(cpu_data => {
+                    cpu_data.reverse(); // Inverser l'ordre des données du CPU
+                    systemChart.data.datasets[0].data = cpu_data;
+                    fetch('/ram_data')
+                        .then(response => response.json())
+                        .then(ram_data => {
+                            ram_data.reverse(); // Inverser l'ordre des données de RAM
+                            systemChart.data.datasets[1].data = ram_data;
+                            systemChart.update();
+                        });
+                });
+        }
+
+        fetchSystemData();
+        // Rafraîchir les données toutes les 10 secondes
+        setInterval(fetchSystemData, 10000); // Changer l'intervalle de rafraîchissement à 10 secondes
     </script>
 </body>
 </html>
