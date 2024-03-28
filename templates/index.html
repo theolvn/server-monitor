@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CPU Performance</title>
+</head>
+<body>
+    <h1>CPU</h1>
+    <p>Utilisation totale du CPU : {{ cpu_usage }}%</p>
+    <h1>RAM</h1>
+    <p>Utilisation totale de la RAM : {{ memory }}%</p>
+    <h1>SERVER STATUS</h1>
+    <p>Etat du serveur minecraft : {{ server_status }}</p>
+
+    <script>
+        var loadTime = window.performance.timing.domContentLoadedEventEnd - window.performance.timing.navigationStart;
+        console.log("Temps de chargement de la page (en millisecondes) :", loadTime);
+    </script>
+</body>
+</html>
